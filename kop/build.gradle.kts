@@ -251,6 +251,7 @@ afterEvaluate {
 
                 HostManager.hostIsLinux ->
                     it.name.startsWith("publishLinux")
+                        || it.name.startsWith("publishMingw")
                         || it.name.startsWith("publishJs")
                         || it.name.startsWith("publishWasmJs")
                         || it.name.startsWith("publishJvmPublication")
