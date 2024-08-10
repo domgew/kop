@@ -1,0 +1,23 @@
+/.gradle/
+/build/
+
+/local.properties
+
+### IntelliJ IDEA ###
+/.idea
+!/.idea/codeStyles
+
+### Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### VS Code ###
+/.vscode/
+
+### Mac OS ###
+.DS_Store
