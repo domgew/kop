@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.konan.target.HostManager
 import java.util.regex.Pattern
 
 val kotlinCoroutinesVersion: String by project
+val uuidVersion: String by project
 
 plugins {
     kotlin("multiplatform")
@@ -43,10 +44,13 @@ kotlin {
         jvmToolchain(17)
     }
     js {
+        browser()
+        nodejs()
+    }
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
         nodejs()
         browser()
-        @OptIn(ExperimentalWasmDsl::class)
-        wasmJs()
     }
     addNativeTargets {
     }
@@ -55,6 +59,8 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(kotlin("stdlib"))
+
+                implementation("com.benasher44:uuid:$uuidVersion")
 
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinCoroutinesVersion")
             }
@@ -129,7 +135,7 @@ publishing {
         withType<MavenPublication> {
             artifact(javadocJar)
             pom {
-                name.set("Kop")
+                name.set("KOP")
                 description.set("Kotlin Multiplatform Object Pool")
                 url.set("https://github.com/domgew/kop")
                 scm {
@@ -204,7 +210,6 @@ tasks.withType<AbstractPublishToMaven>().configureEach {
     dependsOn(signingTasks)
 }
 
-// smartPublish as per https://github.com/Dominaezzz/kotlin-sqlite/blob/master/build.gradle.kts
 afterEvaluate {
     val testTasks = project.tasks.withType<AbstractTestTask>()
         .matching {
@@ -214,10 +219,18 @@ afterEvaluate {
 
                 HostManager.hostIsMac ->
                     it.name.startsWith("macos", true)
+                        || it.name.startsWith("ios", true)
+                        || it.name.startsWith("watchos", true)
+                        || it.name.startsWith("tvos", true)
+
+                        || it.name.startsWith("js", true)
+                        || it.name.startsWith("wasmJs", true)
+                        || it.name.startsWith("jvm", true)
 
                 HostManager.hostIsLinux ->
                     it.name.startsWith("linux", true)
                         || it.name.startsWith("js", true)
+                        || it.name.startsWith("wasmJs", true)
                         || it.name.startsWith("jvm", true)
 
                 else ->
@@ -232,15 +245,20 @@ afterEvaluate {
 
                 HostManager.hostIsMac ->
                     it.name.startsWith("publishMacos")
+                        || it.name.startsWith("publishTvos")
+                        || it.name.startsWith("publishWatchos")
+                        || it.name.startsWith("publishIos")
 
                 HostManager.hostIsLinux ->
                     it.name.startsWith("publishLinux")
                         || it.name.startsWith("publishJs")
+                        || it.name.startsWith("publishWasmJs")
                         || it.name.startsWith("publishJvmPublication")
                         || it.name.startsWith("publishMetadata")
                         || it.name.startsWith("publishKotlinMultiplatform")
 
-                else -> throw Exception("unknown host")
+                else ->
+                    throw Exception("unknown host")
             }
         }
 
