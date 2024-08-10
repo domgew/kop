@@ -1,0 +1,73 @@
+name: Test
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "kop/**"
+      - "gradle.properties"
+      - "gradle/wrapper/**"
+  pull_request:
+    paths:
+      - "kop/**"
+      - "gradle.properties"
+      - "gradle/wrapper/**"
+jobs:
+  test-mingw:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'corretto'
+          java-version: '17'
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2.4.2
+      # https://github.com/actions/cache/blob/main/examples.md#java---gradle
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Test on windows
+        env:
+          IS_CI: yes
+        run: |
+          .\gradlew.bat cleanTest
+          .\gradlew.bat kop:smartTest
+
+  test-nix:
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'corretto'
+          java-version: '17'
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2.4.2
+      # https://github.com/actions/cache/blob/main/examples.md#java---gradle
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Test on ${{ matrix.os }}
+        env:
+          IS_CI: yes
+        run: |
+          ./gradlew cleanTest
+          ./gradlew kop:smartTest
