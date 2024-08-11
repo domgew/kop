@@ -1,16 +1,11 @@
 # KOP - Kotlin Object Pool
 
-[//]: # ([![Maven Central]&#40;https://img.shields.io/maven-central/v/io.github.domgew/kop&#41;]&#40;https://central.sonatype.com/search?q=kop&namespace=io.github.domgew&#41;)
-
-[//]: # ([![Latest Tag]&#40;https://img.shields.io/github/v/tag/domgew/kop?label=latest%20tag&cacheSeconds=180&#41;]&#40;https://github.com/domgew/kop/tags&#41;)
-
-[//]: # ([![Publish]&#40;https://img.shields.io/github/actions/workflow/status/domgew/kop/.github%2Fworkflows%2Fpublish.yml?label=publish&cacheSeconds=180&#41;]&#40;https://github.com/domgew/kop/actions/workflows/publish.yml&#41;)
-
-[//]: # ([![Test]&#40;https://img.shields.io/github/actions/workflow/status/domgew/kop/.github%2Fworkflows%2Ftest.yml?branch=development&label=test&cacheSeconds=180&#41;]&#40;https://github.com/domgew/kop/actions/workflows/test.yml&#41;)
-
-[//]: # (![Kotlin]&#40;https://img.shields.io/github/languages/top/domgew/kop?cacheSeconds=86400&#41;)
-
-[//]: # ([![Licence: MIT]&#40;https://img.shields.io/github/license/domgew/kop?cacheSeconds=86400&#41;]&#40;./LICENSE&#41;)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.domgew/kop)](https://central.sonatype.com/search?q=kop&namespace=io.github.domgew)
+[![Latest Tag](https://img.shields.io/github/v/tag/domgew/kop?label=latest%20tag&cacheSeconds=180)](https://github.com/domgew/kop/tags)
+[![Publish](https://img.shields.io/github/actions/workflow/status/domgew/kop/.github%2Fworkflows%2Fpublish.yml?label=publish&cacheSeconds=180)](https://github.com/domgew/kop/actions/workflows/publish.yml)
+[![Test](https://img.shields.io/github/actions/workflow/status/domgew/kop/.github%2Fworkflows%2Ftest.yml?branch=main&label=test&cacheSeconds=180)](https://github.com/domgew/kop/actions/workflows/test.yml)
+![Kotlin](https://img.shields.io/github/languages/top/domgew/kop?cacheSeconds=86400)
+[![Licence: MIT](https://img.shields.io/github/license/domgew/kop?cacheSeconds=86400)](./LICENSE)
 
 KOP is a Kotlin Multiplatform object pool.
 
