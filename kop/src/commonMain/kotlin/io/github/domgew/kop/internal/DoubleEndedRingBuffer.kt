@@ -16,6 +16,7 @@ internal class DoubleEndedRingBuffer<T>(
 
         return _buffer[_headIdxIncl]!!
             .also {
+                _buffer[_headIdxIncl] = null
                 _headIdxIncl = (_headIdxIncl + 1).mod(capacity)
                 _size = size - 1
             }
@@ -38,6 +39,7 @@ internal class DoubleEndedRingBuffer<T>(
 
         return _buffer[tailIdxIncl]!!
             .also {
+                _buffer[tailIdxIncl] = null
                 _tailIdxExcl = tailIdxIncl
                 _size -= 1
             }
