@@ -21,15 +21,14 @@ public data class KotlinObjectPoolConfig<T>(
      * Be aware that the cleanup blocks the object pool.
      */
     val keepAliveFor: Duration? = null,
+    /**
+     * The strategy of how the next object to use is determined.
+     *
+     * @see KotlinObjectPoolStrategy
+     */
     val strategy: KotlinObjectPoolStrategy = KotlinObjectPoolStrategy.LIFO,
     /**
      * The coroutine scope in which the cleanup jobs are to run in.
      */
     val coroutineScope: CoroutineScope = GlobalScope,
-    /**
-     * This is used to create a new object instance, when needed.
-     *
-     * Be aware that the creation blocks the object pool.
-     */
-    val instanceCreator: suspend () -> T,
 )

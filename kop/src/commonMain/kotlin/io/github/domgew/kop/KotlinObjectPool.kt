@@ -25,11 +25,24 @@ public interface KotlinObjectPool<T> : AutoCloseable {
 
     public companion object {
 
+        /**
+         * **Warning**: [createInstance] blocks the whole object pool.
+         *
+         * @param onBeforeClose Callback to be called before an object is closed
+         * @param onAfterClose Callback to be called after an object was closed
+         * @param createInstance Used to create a new object instance, when needed
+         */
         public operator fun <T> invoke(
             config: KotlinObjectPoolConfig<T>,
+            onBeforeClose: ((T) -> Unit)? = null,
+            onAfterClose: ((T) -> Unit)? = null,
+            createInstance: suspend () -> T,
         ): KotlinObjectPool<T> =
             KotlinObjectPoolImpl(
                 config = config,
+                onBeforeClose = onBeforeClose,
+                onAfterClose = onAfterClose,
+                instanceCreator = createInstance,
             )
     }
 }

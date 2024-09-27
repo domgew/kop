@@ -338,30 +338,40 @@ class KotlinObjectPoolTest {
         val start = testTimeSource.markNow()
         var lastIdentity = 0
         val closed = mutableListOf<Int>()
+        val beforeClosed = mutableListOf<Int>()
+        val afterClosed = mutableListOf<Int>()
         val objectPool = KotlinObjectPool(
             config = KotlinObjectPoolConfig(
                 maxSize = maxSize,
                 keepAliveFor = keepAliveFor,
                 strategy = strategy,
                 coroutineScope = this@prepare,
-            ) {
-                instanceCreationPrecondition()
-
-                val currentIdentity = ++lastIdentity
-
-                TestItem(
-                    identity = currentIdentity,
-                    closeHandler = {
-                        closed.add(currentIdentity)
-                    },
-                )
+            ),
+            onBeforeClose = {
+                beforeClosed.add(it.identity)
             },
-        )
+            onAfterClose = {
+                afterClosed.add(it.identity)
+            },
+        ) {
+            instanceCreationPrecondition()
+
+            val currentIdentity = ++lastIdentity
+
+            TestItem(
+                identity = currentIdentity,
+                closeHandler = {
+                    closed.add(currentIdentity)
+                },
+            )
+        }
         (objectPool as KotlinObjectPoolImpl).getTime = {
             start.elapsedNow()
                 .inWholeMilliseconds
         }
 
+        assertEquals(closed, beforeClosed)
+        assertEquals(closed, afterClosed)
         return TestState(
             objectPool = objectPool,
             closed = closed,

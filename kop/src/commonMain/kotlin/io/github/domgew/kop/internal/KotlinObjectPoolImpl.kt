@@ -15,6 +15,9 @@ import kotlinx.coroutines.withContext
 
 internal class KotlinObjectPoolImpl<T>(
     private val config: KotlinObjectPoolConfig<T>,
+    private val onBeforeClose: ((T) -> Unit)?,
+    private val onAfterClose: ((T) -> Unit)?,
+    private val instanceCreator: suspend () -> T,
 ) : KotlinObjectPool<T> {
 
     internal var getTime: () -> Long =
@@ -35,7 +38,7 @@ internal class KotlinObjectPoolImpl<T>(
             itemsAccessMutex.withLock {
                 if (items.size == 0) {
                     // Potential optimisation: instance creation without lock - only when necessary for complexity reasons
-                    return@withLock config.instanceCreator()
+                    return@withLock instanceCreator()
                 }
 
                 return@withLock if (config.strategy == KotlinObjectPoolStrategy.LIFO) {
@@ -106,12 +109,11 @@ internal class KotlinObjectPoolImpl<T>(
                         item.destructor.cancel()
                     }
 
-                    // if there is no cleanup to be done, we can go to the next item
-                    if (item.instance !is AutoCloseable) {
-                        continue
+                    onBeforeClose?.invoke(item.instance)
+                    if (item.instance is AutoCloseable) {
+                        item.instance.close()
                     }
-
-                    item.instance.close()
+                    onAfterClose?.invoke(item.instance)
                 }
             }
         }
@@ -132,12 +134,11 @@ internal class KotlinObjectPoolImpl<T>(
                 for (item in items) {
                     item.destructor.cancel()
 
-                    // is the object is not closeable we don't have anything to do
-                    if (item.instance !is AutoCloseable) {
-                        continue
+                    onBeforeClose?.invoke(item.instance)
+                    if (item.instance is AutoCloseable) {
+                        item.instance.close()
                     }
-
-                    item.instance.close()
+                    onAfterClose?.invoke(item.instance)
                 }
             }
         }

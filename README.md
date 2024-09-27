@@ -77,9 +77,20 @@ val objectPool = KotlinObjectPool(
         maxSize = 4,
         keepAliveFor = 1.minutes,
         strategy = KotlinObjectPoolStrategy.LIFO,
-        instanceCreator = ::createKedisClient,
     ),
-)
+) {
+    KedisClient(
+        KedisConfiguration(
+            endpoint = KedisConfiguration.Endpoint.HostPort(
+                host = "127.0.0.1",
+                port = 6379,
+            ),
+            authentication = KedisConfiguration.Authentication.NoAutoAuth,
+            connectionTimeoutMillis = 250,
+            keepAlive = true,
+        ),
+    )
+}
 
 suspend fun getValueWithCache() =
     objectPool.withObject { kedisClient: KedisClient ->
@@ -116,19 +127,6 @@ suspend fun getValueWithCache() =
 
 suspend fun getExpensiveValue(): String =
     "Hello World!"
-
-suspend fun createKedisClient() =
-    KedisClient.newClient(
-        KedisConfiguration(
-            endpoint = KedisConfiguration.Endpoint.HostPort(
-                host = "127.0.0.1",
-                port = 6379,
-            ),
-            authentication = KedisConfiguration.Authentication.NoAutoAuth,
-            connectionTimeoutMillis = 250,
-            keepAlive = true,
-        ),
-    )
 
 suspend fun KedisClient.isAvailable(): Boolean {
     if (isConnected) {
