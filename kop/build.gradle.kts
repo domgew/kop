@@ -4,13 +4,10 @@ import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl
 import org.jetbrains.kotlin.konan.target.HostManager
 import java.util.regex.Pattern
 
-val kotlinCoroutinesVersion: String by project
-val uuidVersion: String by project
-
 plugins {
-    kotlin("multiplatform")
-    id("org.jetbrains.dokka")
-    id("org.jetbrains.kotlinx.kover")
+    alias(libs.plugins.dokka)
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kover)
     `maven-publish`
     signing
 }
@@ -58,17 +55,15 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(kotlin("stdlib"))
-
-                implementation("com.benasher44:uuid:$uuidVersion")
-
-                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinCoroutinesVersion")
+                implementation(libs.kotlin.stdlib)
+                implementation(libs.uuid)
+                implementation(libs.kotlinx.coroutines.core)
             }
         }
         val commonTest by getting {
             dependencies {
-                implementation(kotlin("test"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$kotlinCoroutinesVersion")
+                implementation(libs.kotlin.test)
+                implementation(libs.kotlinx.coroutines.test)
             }
         }
     }
