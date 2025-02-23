@@ -1,10 +1,11 @@
 package io.github.domgew.kop.internal
 
-import com.benasher44.uuid.uuid4
 import io.github.domgew.kop.KotlinObjectPool
 import io.github.domgew.kop.KotlinObjectPoolConfig
 import io.github.domgew.kop.KotlinObjectPoolStrategy
 import kotlin.time.DurationUnit
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -13,6 +14,7 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
+@OptIn(ExperimentalUuidApi::class)
 internal class KotlinObjectPoolImpl<T>(
     private val config: KotlinObjectPoolConfig<T>,
     private val onBeforeClose: ((T) -> Unit)?,
@@ -74,11 +76,10 @@ internal class KotlinObjectPoolImpl<T>(
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun createInstanceHolder(
         instance: T,
     ): InstanceHolder<T> {
-        val uid = uuid4()
+        val uid = Uuid.random()
         val currentTimeMillis = getTime()
         val timeToLive = config.keepAliveFor
             ?.toLong(DurationUnit.MILLISECONDS)
@@ -126,7 +127,6 @@ internal class KotlinObjectPoolImpl<T>(
         )
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     override fun close() {
         runBlockingPlatform(config.coroutineScope) {
             itemsAccessMutex.withLock {

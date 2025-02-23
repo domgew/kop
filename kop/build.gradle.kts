@@ -1,6 +1,6 @@
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
-import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl
 import org.jetbrains.kotlin.konan.target.HostManager
 import java.util.regex.Pattern
 
@@ -36,9 +36,9 @@ kotlin {
     withSourcesJar(
         publish = true,
     )
+    jvmToolchain(17)
 
     jvm {
-        jvmToolchain(17)
     }
     js {
         browser()
@@ -56,7 +56,6 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(libs.kotlin.stdlib)
-                implementation(libs.uuid)
                 implementation(libs.kotlinx.coroutines.core)
             }
         }

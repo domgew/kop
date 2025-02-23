@@ -2,7 +2,6 @@ package io.github.domgew.kop
 
 import io.github.domgew.kop.internal.KotlinObjectPoolImpl
 
-@OptIn(ExperimentalStdlibApi::class)
 public interface KotlinObjectPool<T> : AutoCloseable {
 
     /**
