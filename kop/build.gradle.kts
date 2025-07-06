@@ -1,3 +1,5 @@
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.KotlinMultiplatform
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
@@ -8,8 +10,7 @@ plugins {
     alias(libs.plugins.dokka)
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kover)
-    `maven-publish`
-    signing
+    alias(libs.plugins.vanniktech.mavenPublish)
 }
 
 group = "io.github.domgew"
@@ -53,13 +54,13 @@ kotlin {
     }
 
     sourceSets {
-        val commonMain by getting {
+        commonMain {
             dependencies {
                 implementation(libs.kotlin.stdlib)
                 implementation(libs.kotlinx.coroutines.core)
             }
         }
-        val commonTest by getting {
+        commonTest {
             dependencies {
                 implementation(libs.kotlin.test)
                 implementation(libs.kotlinx.coroutines.test)
@@ -111,97 +112,72 @@ fun KotlinMultiplatformExtension.addNativeTargets(
     }
 }
 
-val dokkaOutputDir = "${layout.buildDirectory.get()}/dokka"
-tasks.dokkaHtml {
-    outputDirectory.set(file(dokkaOutputDir))
-}
-val deleteDokkaOutputDir by tasks.register<Delete>("deleteDokkaOutputDirectory") {
-    delete(dokkaOutputDir)
-}
-val javadocJar = tasks.register<Jar>("javadocJar") {
-    dependsOn(deleteDokkaOutputDir, tasks.dokkaHtml)
-    archiveClassifier.set("javadoc")
-    from(dokkaOutputDir)
-}
-
-publishing {
-    publications {
-        withType<MavenPublication> {
-            artifact(javadocJar)
-            pom {
-                name.set("KOP")
-                description.set("Kotlin Multiplatform Object Pool")
-                url.set("https://github.com/domgew/kop")
-                scm {
-                    url.set("https://github.com/domgew/kop")
-                    connection.set("scm:git:git://github.com/domgew/kop.git")
-                    developerConnection.set("scm:git:ssh://github.com:domgew/kop.git")
-                }
-                licenses {
-                    license {
-                        name.set("MIT")
-                        url.set("https://opensource.org/licenses/MIT")
-                    }
-                }
-                issueManagement {
-                    system.set("Github")
-                    url.set("https://github.com/domgew/kop/issues")
-                }
-                developers {
-                    developer {
-                        name.set("domgew")
-                        email.set("44265359+domgew@users.noreply.github.com")
-                    }
-                }
-            }
-        }
+dokka {
+    dokkaPublications.html {
     }
 
-    repositories {
-        if (System.getenv("IS_CI") != "yes") {
-            mavenLocal()
-        } else {
-            maven {
-                name = "oss"
-
-                val releasesRepoUrl = uri(
-                    "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/",
-                )
-                val snapshotsRepoUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-                url =
-                    if (
-                        version.toString()
-                            .endsWith("SNAPSHOT")
-                    )
-                        snapshotsRepoUrl
-                    else
-                        releasesRepoUrl
-
-                credentials {
-                    username = System.getenv("SONATYPE_USER")
-                        ?.trim()
-                        ?.ifEmpty { null }
-                    password = System.getenv("SONATYPE_PASS")
-                        ?.trim()
-                        ?.ifEmpty { null }
-                }
-            }
+    dokkaSourceSets {
+        getByName("commonMain") {
+            samples.from(
+                project.files(),
+                project.files("src/commonTest/kotlin"),
+            )
         }
     }
 }
 
-signing {
-    useInMemoryPgpKeys(
-        System.getenv("GPG_PRIVATE_KEY"),
-        System.getenv("GPG_PRIVATE_PASSWORD"),
+// https://www.jetbrains.com/help/kotlin-multiplatform-dev/multiplatform-publish-libraries.html#set-up-the-publishing-plugin
+// https://vanniktech.github.io/gradle-maven-publish-plugin/what/#kotlin-multiplatform-library
+mavenPublishing {
+    configure(
+        platform = KotlinMultiplatform(
+            javadocJar = JavadocJar.Dokka(
+                taskName = "dokkaGeneratePublicationHtml",
+            ),
+            sourcesJar = true,
+        ),
     )
-    sign(publishing.publications)
-}
 
-// https://github.com/gradle/gradle/issues/26091
-val signingTasks = tasks.withType<Sign>()
-tasks.withType<AbstractPublishToMaven>().configureEach {
-    dependsOn(signingTasks)
+    publishToMavenCentral(
+        automaticRelease = false,
+    )
+    signAllPublications()
+    coordinates(
+        groupId = project.group
+            .toString(),
+        artifactId = "kop",
+        version = project.version
+            .toString(),
+    )
+
+    pom {
+        name = "KOP"
+        description = "Kotlin Multiplatform Object Pool"
+        url = "https://github.com/domgew/kop"
+        scm {
+            url = "https://github.com/domgew/kop"
+            connection = "scm:git:git://github.com/domgew/kop.git"
+            developerConnection = "scm:git:ssh://github.com:domgew/kop.git"
+        }
+        licenses {
+            license {
+                name = "MIT"
+                url = "https://opensource.org/licenses/MIT"
+            }
+        }
+        issueManagement {
+            system = "Github"
+            url = "https://github.com/domgew/kop/issues"
+        }
+        developers {
+            developer {
+                id = "domgew"
+                name = "domgew"
+                email = "44265359+domgew@users.noreply.github.com"
+                url = "https://github.com/domgew"
+            }
+        }
+    }
 }
 
 afterEvaluate {
@@ -231,7 +207,13 @@ afterEvaluate {
                     throw Exception("unknown host")
             }
         }
-    val publishTasks = project.tasks.withType<PublishToMavenRepository>()
+    val publishTasks = when {
+        System.getenv("IS_CI") == "yes" ->
+            project.tasks.withType<PublishToMavenRepository>()
+
+        else ->
+            project.tasks.withType<PublishToMavenLocal>()
+    }
         .matching {
             when {
                 HostManager.hostIsMingw ->
@@ -255,27 +237,48 @@ afterEvaluate {
                 else ->
                     throw Exception("unknown host")
             }
+                .and(
+                    if (System.getenv("IS_CI") == "yes") {
+                        it.name.endsWith("MavenCentralRepository")
+                    } else {
+                        it.name.endsWith("MavenLocal")
+                    },
+                )
         }
 
     if (System.getenv("IS_CI") == "yes") {
         println("#####################################")
         println("test tasks:")
-        for (task in project.tasks.withType<AbstractTestTask>()) {
+        val allTestTasks = project.tasks
+            .withType<AbstractTestTask>()
+            .sortedBy {
+                it.name
+            }
+        for (task in allTestTasks) {
             println("\t${task.name}")
         }
         println()
         println("smartTest tasks:")
-        for (task in testTasks) {
+        for (task in testTasks.sortedBy { it.name }) {
             println("\t${task.name}")
         }
         println("#####################################")
         println("publish tasks:")
-        for (task in project.tasks.withType<PublishToMavenRepository>()) {
+        val allPublishTasks = project.tasks
+            .withType<PublishToMavenLocal>()
+            .plus(
+                project.tasks
+                    .withType<PublishToMavenRepository>(),
+            )
+            .sortedBy {
+                it.name
+            }
+        for (task in allPublishTasks) {
             println("\t${task.name}")
         }
         println()
         println("smartPublish tasks:")
-        for (task in publishTasks) {
+        for (task in publishTasks.sortedBy { it.name }) {
             println("\t${task.name}")
         }
         println("#####################################")
