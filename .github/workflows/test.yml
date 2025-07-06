@@ -2,16 +2,20 @@ name: Test
 on:
   push:
     branches:
-      - main
+      - "main"
     paths:
       - "kop/**"
       - "gradle.properties"
       - "gradle/wrapper/**"
+      - "gradle/libs.versions.toml"
+      - ".github/workflows/test.yml"
   pull_request:
     paths:
       - "kop/**"
       - "gradle.properties"
       - "gradle/wrapper/**"
+      - "gradle/libs.versions.toml"
+      - ".github/workflows/test.yml"
 jobs:
   test-mingw:
     runs-on: windows-latest
@@ -24,9 +28,9 @@ jobs:
           distribution: 'corretto'
           java-version: '17'
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2.4.2
+        uses: gradle/gradle-build-action@v3.5.0
       # https://github.com/actions/cache/blob/main/examples.md#java---gradle
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
@@ -55,9 +59,9 @@ jobs:
           distribution: 'corretto'
           java-version: '17'
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2.4.2
+        uses: gradle/gradle-build-action@v3.5.0
       # https://github.com/actions/cache/blob/main/examples.md#java---gradle
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
@@ -71,3 +75,12 @@ jobs:
         run: |
           ./gradlew cleanTest
           ./gradlew kop:smartTest
+      - name: Test reports on ${{ matrix.os }}
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-${{ github.sha }}-${{ matrix.os }}
+          path: |
+            kop/build/test-results/
+            kop/build/reports/tests/
+          overwrite: true
