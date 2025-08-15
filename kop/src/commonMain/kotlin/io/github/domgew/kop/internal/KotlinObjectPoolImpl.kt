@@ -3,6 +3,7 @@ package io.github.domgew.kop.internal
 import io.github.domgew.kop.KotlinObjectPool
 import io.github.domgew.kop.KotlinObjectPoolConfig
 import io.github.domgew.kop.KotlinObjectPoolStrategy
+import io.github.domgew.kop.Optional
 import kotlin.time.DurationUnit
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -55,6 +56,45 @@ internal class KotlinObjectPoolImpl<T>(
             }
 
             return instanceCreator()
+        } catch (th: Throwable) {
+            availableItemsSemaphore.release()
+            throw th
+        }
+    }
+
+    override suspend fun tryTake(): Optional<T> {
+        if (
+            !availableItemsSemaphore.tryAcquire()
+        ) {
+            return Optional.None
+        }
+
+        try {
+            itemsAccessMutex.withLock {
+                if (items.size > 0) {
+                    return when (config.strategy) {
+                        KotlinObjectPoolStrategy.LIFO ->
+                            items.removeLast()
+
+                        KotlinObjectPoolStrategy.FIFO ->
+                            items.removeFirst()
+                    }
+                        .also {
+                            it.destructor
+                                .cancel()
+                        }
+                        .instance
+                        .let {
+                            Optional.Some(
+                                value = it,
+                            )
+                        }
+                }
+            }
+
+            return Optional.Some(
+                value = instanceCreator(),
+            )
         } catch (th: Throwable) {
             availableItemsSemaphore.release()
             throw th

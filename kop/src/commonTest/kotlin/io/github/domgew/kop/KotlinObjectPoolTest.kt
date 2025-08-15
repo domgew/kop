@@ -10,6 +10,8 @@ import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -326,6 +328,94 @@ class KotlinObjectPoolTest {
         advanceUntilIdle()
 
         assertEquals(listOf(2, 1), testState.closed)
+    }
+
+    @Test
+    fun withObject() = runTest {
+        val testState = prepare(
+            maxSize = 2,
+            keepAliveFor = 2.minutes,
+            strategy = KotlinObjectPoolStrategy.LIFO,
+        )
+        assertEquals(testState.lastCreatedInstanceId, 0)
+
+        val (first, second, third) = coroutineScope {
+            listOf(
+                async {
+                    testState.objectPool.withObject {
+                        delay(100)
+                        it.identity
+                    }
+                },
+                async {
+                    testState.objectPool.withObject {
+                        delay(100)
+                        it.identity
+                    }
+                },
+                async {
+                    testState.objectPool.withObject {
+                        delay(100)
+                        it.identity
+                    }
+                },
+            )
+                .awaitAll()
+        }
+
+        assertEquals(1, first)
+        assertEquals(2, second)
+        assertEquals(2, third)
+    }
+
+    @Test
+    fun tryWithObject() = runTest {
+        val testState = prepare(
+            maxSize = 2,
+            keepAliveFor = 2.minutes,
+            strategy = KotlinObjectPoolStrategy.LIFO,
+        )
+        assertEquals(testState.lastCreatedInstanceId, 0)
+
+        val (first, second, third) = coroutineScope {
+            listOf(
+                async {
+                    testState.objectPool.tryWithObject(
+                        noObject = {
+                            null
+                        },
+                    ) {
+                        delay(100)
+                        it.identity
+                    }
+                },
+                async {
+                    testState.objectPool.tryWithObject(
+                        noObject = {
+                            null
+                        },
+                    ) {
+                        delay(100)
+                        it.identity
+                    }
+                },
+                async {
+                    testState.objectPool.tryWithObject(
+                        noObject = {
+                            null
+                        },
+                    ) {
+                        delay(100)
+                        it.identity
+                    }
+                },
+            )
+                .awaitAll()
+        }
+
+        assertEquals(1, first)
+        assertEquals(2, second)
+        assertEquals(null, third)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)

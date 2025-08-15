@@ -7,7 +7,8 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 
 /**
- * Takes the next object from the pool adhering to [KotlinObjectPoolConfig.strategy], calls [block], and returns it afterward. If necessary, a new object is created.
+ * Takes the next object from the pool adhering to [KotlinObjectPoolConfig.strategy], calls [block], and returns it afterward.
+ * If necessary, a new object is created.
  *
  * If the object pool is at its maximum, it waits for the next available object.
  */
@@ -20,6 +21,40 @@ public suspend inline fun <T, R> KotlinObjectPool<T>.withObject(
     }
 
     val item = take()
+
+    try {
+        return block(item)
+    } finally {
+        withContext(NonCancellable) {
+            giveBack(item)
+        }
+    }
+}
+
+/**
+ * Tries to take the next object from the pool adhering to [KotlinObjectPoolConfig.strategy], calls [block], and returns it afterward.
+ * If necessary, a new object is created.
+ *
+ * If the object pool is at its maximum, it runs and returns the result of [noObject].
+ */
+@OptIn(ExperimentalContracts::class)
+public suspend inline fun <T, R> KotlinObjectPool<T>.tryWithObject(
+    noObject: () -> R,
+    block: (item: T) -> R,
+): R {
+    contract {
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
+    }
+
+    val item = when (
+        val direct = tryTake()
+    ) {
+        is Optional.Some ->
+            direct.value
+
+        Optional.None ->
+            return noObject()
+    }
 
     try {
         return block(item)

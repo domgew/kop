@@ -18,6 +18,19 @@ public interface KotlinObjectPool<T> : AutoCloseable {
     public suspend fun take(): T
 
     /**
+     * Try to take the next object from the object pool adhering to [KotlinObjectPoolConfig.strategy].
+     * If necessary, a new object is created.
+     *
+     * If the object pool is at its maximum, it returns [Optional.None].
+     *
+     * Be aware you need to return the object yourself.
+     * You can also use [KotlinObjectPool.tryWithObject] for automatic return.
+     *
+     * @see KotlinObjectPool.tryWithObject
+     */
+    public suspend fun tryTake(): Optional<T>
+
+    /**
      * Returns the object to the pool, for the next use.
      */
     public suspend fun giveBack(
