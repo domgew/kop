@@ -36,25 +36,25 @@ internal class KotlinObjectPoolImpl<T>(
     override suspend fun take(): T {
         availableItemsSemaphore.acquire()
 
-        return try {
+        try {
             itemsAccessMutex.withLock {
-                if (items.size == 0) {
-                    // Potential optimisation: instance creation without lock - only when necessary for complexity reasons
-                    return@withLock instanceCreator()
-                }
+                if (items.size > 0) {
+                    return when (config.strategy) {
+                        KotlinObjectPoolStrategy.LIFO ->
+                            items.removeLast()
 
-                return@withLock if (config.strategy == KotlinObjectPoolStrategy.LIFO) {
-                    items.getLast()
-                } else {
-                    items.getFirst()
-                }
-                    .also {
-                        // not in pool anymore
-                        it.destructor
-                            .cancel()
+                        KotlinObjectPoolStrategy.FIFO ->
+                            items.removeFirst()
                     }
-                    .instance
+                        .also {
+                            it.destructor
+                                .cancel()
+                        }
+                        .instance
+                }
             }
+
+            return instanceCreator()
         } catch (th: Throwable) {
             availableItemsSemaphore.release()
             throw th
@@ -64,8 +64,14 @@ internal class KotlinObjectPoolImpl<T>(
     override suspend fun giveBack(
         item: T,
     ) {
-        itemsAccessMutex.withLock {
-            withContext(NonCancellable) {
+        withContext(NonCancellable) {
+            itemsAccessMutex.withLock {
+                if (items.size >= config.maxSize) {
+                    throw IllegalStateException(
+                        "Pool is already full",
+                    )
+                }
+
                 items.putLast(
                     item = createInstanceHolder(
                         instance = item,
@@ -103,7 +109,7 @@ internal class KotlinObjectPoolImpl<T>(
                     }
 
                     // this also removes the item from the buffer
-                    val item = items.getFirst()
+                    val item = items.removeFirst()
 
                     // we don't want a dangling job, but we also don't want to cancel ourselves
                     if (item.uid != uid) {
@@ -130,15 +136,40 @@ internal class KotlinObjectPoolImpl<T>(
     override fun close() {
         runBlockingPlatform(config.coroutineScope) {
             itemsAccessMutex.withLock {
+                var firstCloseError: Throwable? = null
+                var firstCallbackError: Throwable? = null
+
                 // the iteration also removes it from the buffer
                 for (item in items) {
                     item.destructor.cancel()
 
-                    onBeforeClose?.invoke(item.instance)
-                    if (item.instance is AutoCloseable) {
-                        item.instance.close()
+                    try {
+                        onBeforeClose?.invoke(item.instance)
+                    } catch (th: Throwable) {
+                        firstCallbackError = firstCallbackError
+                            ?: th
                     }
-                    onAfterClose?.invoke(item.instance)
+                    if (item.instance is AutoCloseable) {
+                        try {
+                            item.instance.close()
+                        } catch (th: Throwable) {
+                            firstCloseError = firstCloseError
+                                ?: th
+                        }
+                    }
+                    try {
+                        onAfterClose?.invoke(item.instance)
+                    } catch (th: Throwable) {
+                        firstCallbackError = firstCallbackError
+                            ?: th
+                    }
+                }
+
+                if (firstCloseError != null) {
+                    throw firstCloseError
+                }
+                if (firstCallbackError != null) {
+                    throw firstCallbackError
                 }
             }
         }

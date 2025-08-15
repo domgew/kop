@@ -18,10 +18,10 @@ class DoubleEndedRingBufferTest {
             instance.peekFirst()
         }
         assertFails {
-            instance.getFirst()
+            instance.removeFirst()
         }
         assertFails {
-            instance.getLast()
+            instance.removeLast()
         }
 
         instance.putLast("1")
@@ -29,12 +29,12 @@ class DoubleEndedRingBufferTest {
         assertEquals(1, instance.size)
 
         assertEquals("1", instance.peekFirst())
-        assertEquals("1", instance.getFirst())
+        assertEquals("1", instance.removeFirst())
 
         instance.putLast("2")
 
         assertEquals("2", instance.peekFirst())
-        assertEquals("2", instance.getLast())
+        assertEquals("2", instance.removeLast())
 
         instance.putLast("3")
         instance.putLast("4")
@@ -46,9 +46,9 @@ class DoubleEndedRingBufferTest {
 
         assertEquals(3, instance.size)
         assertEquals("3", instance.peekFirst())
-        assertEquals("3", instance.getFirst())
-        assertEquals("5", instance.getLast())
-        assertEquals("4", instance.getLast())
+        assertEquals("3", instance.removeFirst())
+        assertEquals("5", instance.removeLast())
+        assertEquals("4", instance.removeLast())
         assertEquals(0, instance.size)
 
         for (item in instance) {

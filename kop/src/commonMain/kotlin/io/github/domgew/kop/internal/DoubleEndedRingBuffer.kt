@@ -11,7 +11,7 @@ internal class DoubleEndedRingBuffer<T>(
 
     val size: Int by ::_size
 
-    fun getFirst(): T {
+    fun removeFirst(): T {
         require(size > 0)
 
         return _buffer[_headIdxIncl]!!
@@ -28,7 +28,7 @@ internal class DoubleEndedRingBuffer<T>(
         return _buffer[_headIdxIncl]!!
     }
 
-    fun getLast(): T {
+    fun removeLast(): T {
         require(size > 0)
 
         val tailIdxIncl = if (_tailIdxExcl == 0) {
@@ -58,7 +58,7 @@ internal class DoubleEndedRingBuffer<T>(
     override fun iterator(): Iterator<T> =
         iterator {
             while (size > 0) {
-                yield(getFirst())
+                yield(removeFirst())
             }
         }
 }
