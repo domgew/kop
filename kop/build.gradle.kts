@@ -110,6 +110,19 @@ fun KotlinMultiplatformExtension.addNativeTargets(
     watchosX64 {
         block()
     }
+
+    androidNativeArm32 {
+        block()
+    }
+    androidNativeArm64 {
+        block()
+    }
+    androidNativeX64 {
+        block()
+    }
+    androidNativeX86 {
+        block()
+    }
 }
 
 dokka {
@@ -199,6 +212,7 @@ afterEvaluate {
 
                 HostManager.hostIsLinux ->
                     it.name.startsWith("linux", true)
+                        || it.name.startsWith("android", true)
                         || it.name.startsWith("js", true)
                         || it.name.startsWith("wasmJs", true)
                         || it.name.startsWith("jvm", true)
@@ -227,6 +241,7 @@ afterEvaluate {
 
                 HostManager.hostIsLinux ->
                     it.name.startsWith("publishLinux")
+                        || it.name.startsWith("publishAndroid")
                         || it.name.startsWith("publishMingw")
                         || it.name.startsWith("publishJs")
                         || it.name.startsWith("publishWasmJs")

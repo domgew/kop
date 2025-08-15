@@ -50,6 +50,10 @@ See Dokka-generated [docs](https://javadoc.io/doc/io.github.domgew/kop/latest/ko
 * JS: NodeJS
 * wasmJS: Browser
 * wasmJS: NodeJS
+* Native: Android ARM64
+* Native: Android ARM32
+* Native: Android X64
+* Native: Android X86
 * Native: Linux X64
 * Native: Linux ARM64
 * Native: macOS X64
@@ -61,11 +65,6 @@ See Dokka-generated [docs](https://javadoc.io/doc/io.github.domgew/kop/latest/ko
 * Native: watchOS ARM64
 * Native: tvOS X64
 * Native: tvOS ARM64
-
-**Potential Future Targets**:
-
-* Native: Android X64
-* Native: Android ARM64
 
 ## Examples
 
