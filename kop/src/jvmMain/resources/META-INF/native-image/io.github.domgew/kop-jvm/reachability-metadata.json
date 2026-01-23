@@ -1,0 +1,124 @@
+{
+    "reflection": [
+        {
+            "type": "io.github.domgew.kop.KotlinObjectPool"
+        },
+        {
+            "type": "io.github.domgew.kop.KotlinObjectPoolBuildScope"
+        },
+        {
+            "type": "io.github.domgew.kop.KotlinObjectPoolBuildScope$MissingConfig"
+        },
+        {
+            "type": "io.github.domgew.kop.KotlinObjectPoolConfig"
+        },
+        {
+            "type": "io.github.domgew.kop.KotlinObjectPoolDsl"
+        },
+        {
+            "type": "io.github.domgew.kop.KotlinObjectPoolExtensionsKt"
+        },
+        {
+            "type": "io.github.domgew.kop.KotlinObjectPoolStrategy"
+        },
+        {
+            "type": "io.github.domgew.kop.Optional"
+        },
+        {
+            "type": "io.github.domgew.kop.Optional$Some"
+        },
+        {
+            "type": "io.github.domgew.kop.Optional$None"
+        },
+        {
+            "type": "io.github.domgew.kop.OptionalExtKt"
+        },
+        {
+            "type": "io.github.domgew.kop.internal.FunctionsJvmKt"
+        },
+        {
+            "type": "io.github.domgew.kop.internal.FunctionsKt"
+        },
+        {
+            "type": "io.github.domgew.kop.internal.DoubleEndedRingBuffer"
+        },
+        {
+            "type": "io.github.domgew.kop.internal.InstanceHolder"
+        },
+        {
+            "type": "io.github.domgew.kop.internal.KotlinObjectPoolImpl"
+        },
+        {
+            "type": "kotlin.AutoClosable"
+        },
+        {
+            "type": "kotlin.time.TimeSource"
+        },
+        {
+            "type": "kotlin.time.TimeSource$Monotonic"
+        },
+        {
+            "type": "kotlin.time.Duration"
+        },
+        {
+            "type": "kotlin.DslMarker"
+        },
+        {
+            "type": "kotlin.Target"
+        },
+        {
+            "type": "kotlin.contracts.InvocationKind"
+        },
+        {
+            "type": "kotlin.contracts.contract"
+        },
+        {
+            "type": "kotlin.collections.Iterable"
+        },
+        {
+            "type": "kotlin.collections.MutableList"
+        },
+        {
+            "type": "kotlin.collections.SequenceBuilderKt"
+        },
+        {
+            "type": "kotlin.time.TimeMark"
+        },
+        {
+            "type": "kotlin.uuid.Uuid"
+        },
+        {
+            "type": "kotlinx.coroutines.CoroutineScope"
+        },
+        {
+            "type": "kotlinx.coroutines.GlobalScope"
+        },
+        {
+            "type": "kotlinx.coroutines.NonCancellable"
+        },
+        {
+            "type": "kotlinx.coroutines.withContext"
+        },
+        {
+            "type": "kotlinx.coroutines.runBlocking"
+        },
+        {
+            "type": "kotlinx.coroutines.Job"
+        },
+        {
+            "type": "kotlinx.coroutines.DelayKt"
+        },
+        {
+            "type": "kotlinx.coroutines.BuildersCommonKt"
+        },
+        {
+            "type": "kotlinx.coroutines.sync.Mutex"
+        },
+        {
+            "type": "kotlinx.coroutines.sync.MutexKt"
+        },
+        {
+            "type": "kotlinx.coroutines.sync.Semaphore"
+        }
+    ]
+}

@@ -67,7 +67,7 @@ public class KotlinObjectPoolBuildScope<T> internal constructor() {
     public fun onAfterClose(
         block: ((T) -> Unit)?,
     ) {
-        _onBeforeClose = block
+        _onAfterClose = block
     }
 
     /**

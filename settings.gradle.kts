@@ -1,3 +1,11 @@
+rootProject.name = "kop"
+
+include(":kop")
+
+if (System.getenv("IS_CI") != "yes") {
+    include(":test-graalvm")
+}
+
 pluginManagement {
     repositories {
         gradlePluginPortal()
@@ -51,7 +59,3 @@ dependencyResolutionManagement {
         }
     }
 }
-
-rootProject.name = "kop"
-
-include(":kop")
