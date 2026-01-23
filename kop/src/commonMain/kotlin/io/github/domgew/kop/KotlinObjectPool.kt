@@ -1,6 +1,10 @@
 package io.github.domgew.kop
 
 import io.github.domgew.kop.internal.KotlinObjectPoolImpl
+import kotlin.time.TimeSource
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 
 public interface KotlinObjectPool<T> : AutoCloseable {
 
@@ -44,18 +48,25 @@ public interface KotlinObjectPool<T> : AutoCloseable {
          *
          * @param onBeforeClose Callback to be called before an object is closed
          * @param onAfterClose Callback to be called after an object was closed
+         * @param coroutineScope The coroutine scope in which the cleanup jobs are to run in
+         * @param timeSource The time source to use to compute the time to live from
          * @param createInstance Used to create a new object instance, when needed
          */
         public operator fun <T> invoke(
             config: KotlinObjectPoolConfig<T>,
             onBeforeClose: ((T) -> Unit)? = null,
             onAfterClose: ((T) -> Unit)? = null,
+            @OptIn(DelicateCoroutinesApi::class)
+            coroutineScope: CoroutineScope = GlobalScope,
+            timeSource: TimeSource = TimeSource.Monotonic,
             createInstance: suspend () -> T,
         ): KotlinObjectPool<T> =
             KotlinObjectPoolImpl(
                 config = config,
                 onBeforeClose = onBeforeClose,
                 onAfterClose = onAfterClose,
+                coroutineScope = coroutineScope,
+                timeSource = timeSource,
                 instanceCreator = createInstance,
             )
     }

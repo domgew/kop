@@ -71,6 +71,11 @@ See Dokka-generated [docs](https://javadoc.io/doc/io.github.domgew/kop/latest/ko
 ### [Kedis](https://github.com/domgew/kedis) - Kotlin Multiplatform Redis Cache
 
 ```kotlin
+val kedisConfiguration: KedisConfiguration = TODO()
+
+suspend fun KedisClient.getFromCache(): String =
+    TODO()
+
 val objectPool = KotlinObjectPool(
     KotlinObjectPoolConfig(
         maxSize = 4,
@@ -78,66 +83,11 @@ val objectPool = KotlinObjectPool(
         strategy = KotlinObjectPoolStrategy.LIFO,
     ),
 ) {
-    KedisClient(
-        KedisConfiguration(
-            endpoint = KedisConfiguration.Endpoint.HostPort(
-                host = "127.0.0.1",
-                port = 6379,
-            ),
-            authentication = KedisConfiguration.Authentication.NoAutoAuth,
-            connectionTimeoutMillis = 250,
-            keepAlive = true,
-        ),
-    )
+    KedisClient(kedisConfiguration)
 }
 
 suspend fun getValueWithCache() =
     objectPool.withObject { kedisClient: KedisClient ->
-        if (!kedisClient.isAvailable()) {
-            // logging might be nice
-            return@withObject getExpensiveValue()
-        }
-
-        val value = kedisClient.get("testKey")
-
-        if (value != null) {
-            return@withObject value
-        }
-
-        val valueFromCostlySystem = getExpensiveValue()
-
-        try {
-            kedisClient.set(
-                key = "testKey",
-                value = valueFromCostlySystem,
-                options = SetOptions(
-                    expire = SetOptions.ExpireOption.ExpiresInSeconds(
-                        seconds = 120,
-                    ),
-                ),
-            )
-        } catch (th: Throwable) {
-            // ignore exception but ensure the coroutine scope is still active - probably logging would be nice
-            ensureActive()
-        }
-
-        return@withObject valueFromCostlySystem
+        kedisClient.getFromCache()
     }
-
-suspend fun getExpensiveValue(): String =
-    "Hello World!"
-
-suspend fun KedisClient.isAvailable(): Boolean {
-    if (isConnected) {
-        return true
-    }
-
-    try {
-        connect()
-        return true
-    } catch (th: Throwable) {
-        ensureActive()
-        return false
-    }
-}
 ```

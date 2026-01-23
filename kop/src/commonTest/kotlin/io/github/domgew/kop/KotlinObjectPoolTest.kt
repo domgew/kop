@@ -1,6 +1,5 @@
 package io.github.domgew.kop
 
-import io.github.domgew.kop.internal.KotlinObjectPoolImpl
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -483,11 +482,10 @@ class KotlinObjectPoolTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun TestScope.prepare(
         maxSize: Int,
-        keepAliveFor: Duration?,
+        keepAliveFor: Duration,
         strategy: KotlinObjectPoolStrategy,
         instanceCreationPrecondition: suspend () -> Unit = {},
     ): TestState {
-        val start = testTimeSource.markNow()
         var lastIdentity = 0
         val closed = mutableListOf<Int>()
         val beforeClosed = mutableListOf<Int>()
@@ -497,7 +495,6 @@ class KotlinObjectPoolTest {
                 maxSize = maxSize,
                 keepAliveFor = keepAliveFor,
                 strategy = strategy,
-                coroutineScope = this@prepare,
             ),
             onBeforeClose = {
                 beforeClosed.add(it.identity)
@@ -505,6 +502,8 @@ class KotlinObjectPoolTest {
             onAfterClose = {
                 afterClosed.add(it.identity)
             },
+            coroutineScope = this@prepare,
+            timeSource = testTimeSource,
         ) {
             instanceCreationPrecondition()
 
@@ -516,10 +515,6 @@ class KotlinObjectPoolTest {
                     closed.add(currentIdentity)
                 },
             )
-        }
-        (objectPool as KotlinObjectPoolImpl).getTime = {
-            start.elapsedNow()
-                .inWholeMilliseconds
         }
 
         assertEquals(closed, beforeClosed)

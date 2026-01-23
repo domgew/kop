@@ -4,9 +4,10 @@ import io.github.domgew.kop.KotlinObjectPool
 import io.github.domgew.kop.KotlinObjectPoolConfig
 import io.github.domgew.kop.KotlinObjectPoolStrategy
 import io.github.domgew.kop.Optional
-import kotlin.time.DurationUnit
+import kotlin.time.TimeSource
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -20,11 +21,10 @@ internal class KotlinObjectPoolImpl<T>(
     private val config: KotlinObjectPoolConfig<T>,
     private val onBeforeClose: ((T) -> Unit)?,
     private val onAfterClose: ((T) -> Unit)?,
+    private val coroutineScope: CoroutineScope,
+    private val timeSource: TimeSource,
     private val instanceCreator: suspend () -> T,
 ) : KotlinObjectPool<T> {
-
-    internal var getTime: () -> Long =
-        { getTimeMillis() }
 
     private val availableItemsSemaphore = Semaphore(config.maxSize)
     private val itemsAccessMutex = Mutex()
@@ -126,10 +126,13 @@ internal class KotlinObjectPoolImpl<T>(
         instance: T,
     ): InstanceHolder<T> {
         val uid = Uuid.random()
-        val currentTimeMillis = getTime()
+        val createdAt = timeSource.markNow()
         val timeToLive = config.keepAliveFor
-            ?.toLong(DurationUnit.MILLISECONDS)
-        val destructor = config.coroutineScope.launch {
+            .takeIf {
+                it.isFinite()
+                    && it.isPositive()
+            }
+        val destructor = coroutineScope.launch {
             if (timeToLive == null) {
                 return@launch
             }
@@ -137,13 +140,12 @@ internal class KotlinObjectPoolImpl<T>(
             delay(timeToLive)
 
             itemsAccessMutex.withLock {
-                val cleanUpCutOff = getTime() - timeToLive
-
                 while (items.size > 0) {
                     // first is oldest since we add at the last
                     if (
                         items.peekFirst()
-                            .addedAtMillis > cleanUpCutOff
+                            .removeAt
+                            ?.hasPassedNow() != true
                     ) {
                         break
                     }
@@ -169,12 +171,13 @@ internal class KotlinObjectPoolImpl<T>(
             instance = instance,
             uid = uid,
             destructor = destructor,
-            addedAtMillis = currentTimeMillis,
+            removeAt = timeToLive
+                ?.let(createdAt::plus),
         )
     }
 
     override fun close() {
-        runBlockingPlatform(config.coroutineScope) {
+        runBlockingPlatform(coroutineScope) {
             itemsAccessMutex.withLock {
                 var firstCloseError: Throwable? = null
                 var firstCallbackError: Throwable? = null
