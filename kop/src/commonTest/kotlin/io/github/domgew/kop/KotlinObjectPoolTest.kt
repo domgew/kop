@@ -2,10 +2,12 @@ package io.github.domgew.kop
 
 import io.github.domgew.kop.internal.KotlinObjectPoolImpl
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
@@ -21,6 +23,66 @@ import kotlinx.coroutines.withTimeout
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class KotlinObjectPoolTest {
+
+    @Test
+    fun parallelCreationDuration() = runTest {
+        val itemDuration = 500.milliseconds
+        val testState = prepare(
+            maxSize = 3,
+            keepAliveFor = 2.minutes,
+            strategy = KotlinObjectPoolStrategy.FIFO,
+            instanceCreationPrecondition = {
+                delay(itemDuration)
+            },
+        )
+
+        val start = testTimeSource.markNow()
+        val firstItem = async {
+            val start = testTimeSource.markNow()
+            val obj = testState.objectPool.take()
+            val end = testTimeSource.markNow()
+
+            return@async Pair(
+                obj,
+                end - start,
+            )
+        }
+        val secondItem = async {
+            val start = testTimeSource.markNow()
+            val obj = testState.objectPool.take()
+            val end = testTimeSource.markNow()
+
+            return@async Pair(
+                obj,
+                end - start,
+            )
+        }
+
+        val (firstObject, firstDuration) = firstItem.await()
+        val (secondObject, secondDuration) = secondItem.await()
+        val end = testTimeSource.markNow()
+        val overallDuration = end - start
+
+        testState.objectPool.giveBack(firstObject)
+        testState.objectPool.giveBack(secondObject)
+        testState.objectPool.close()
+
+        assertDurationEquals(
+            expected = itemDuration,
+            actual = overallDuration,
+            message = "overall duration",
+        )
+        assertDurationEquals(
+            expected = itemDuration,
+            actual = firstDuration,
+            message = "first duration",
+        )
+        assertDurationEquals(
+            expected = itemDuration,
+            actual = secondDuration,
+            message = "second duration",
+        )
+    }
 
     @Test
     fun lifoTest() = runTest {
@@ -468,6 +530,19 @@ class KotlinObjectPoolTest {
         ) {
             lastIdentity
         }
+    }
+
+    private fun assertDurationEquals(
+        expected: Duration,
+        actual: Duration,
+        delta: Duration = 10.milliseconds,
+        message: String? = null,
+    ) {
+        assertContains(
+            (expected - delta)..(expected + delta),
+            actual,
+            message,
+        )
     }
 
     class TestState(
