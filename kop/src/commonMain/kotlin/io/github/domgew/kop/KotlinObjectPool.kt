@@ -44,16 +44,14 @@ public interface KotlinObjectPool<T> : AutoCloseable {
     public companion object {
 
         /**
-         * **Warning**: [createInstance] blocks the whole object pool.
-         *
-         * @param onBeforeClose Callback to be called before an object is closed
-         * @param onAfterClose Callback to be called after an object was closed
-         * @param coroutineScope The coroutine scope in which the cleanup jobs are to run in
-         * @param timeSource The time source to use to compute the time to live from
+         * @param onBeforeClose Callback to be called before an object is closed - blocking
+         * @param onAfterClose Callback to be called after an object was closed - blocking
+         * @param coroutineScope The coroutine scope in which the cleanup jobs are to run in - mostly useful in testing
+         * @param timeSource The time source to use to compute the time to live from - mostly useful in testing
          * @param createInstance Used to create a new object instance, when needed
          */
         public operator fun <T> invoke(
-            config: KotlinObjectPoolConfig<T>,
+            config: KotlinObjectPoolConfig,
             onBeforeClose: ((T) -> Unit)? = null,
             onAfterClose: ((T) -> Unit)? = null,
             @OptIn(DelicateCoroutinesApi::class)
@@ -69,5 +67,31 @@ public interface KotlinObjectPool<T> : AutoCloseable {
                 timeSource = timeSource,
                 instanceCreator = createInstance,
             )
+
+        @Throws(
+            KotlinObjectPoolBuildScope.MissingConfig::class,
+        )
+        public fun <T> build(
+            block: KotlinObjectPoolBuildScope<T>.() -> Unit,
+        ): KotlinObjectPool<T> =
+            KotlinObjectPoolBuildScope<T>()
+                .apply(block)
+                .build()
+
+        /**
+         * @param baseConfig The base configuration from which to build from
+         */
+        @Throws(
+            KotlinObjectPoolBuildScope.MissingConfig::class,
+        )
+        public fun <T> build(
+            baseConfig: KotlinObjectPoolConfig,
+            block: KotlinObjectPoolBuildScope<T>.() -> Unit,
+        ): KotlinObjectPool<T> =
+            KotlinObjectPoolBuildScope<T>(
+                baseConfig = baseConfig,
+            )
+                .apply(block)
+                .build()
     }
 }

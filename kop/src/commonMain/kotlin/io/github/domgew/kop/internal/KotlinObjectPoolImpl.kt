@@ -18,7 +18,7 @@ import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalUuidApi::class)
 internal class KotlinObjectPoolImpl<T>(
-    private val config: KotlinObjectPoolConfig<T>,
+    private val config: KotlinObjectPoolConfig,
     private val onBeforeClose: ((T) -> Unit)?,
     private val onAfterClose: ((T) -> Unit)?,
     private val coroutineScope: CoroutineScope,

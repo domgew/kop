@@ -6,7 +6,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 
 @OptIn(DelicateCoroutinesApi::class)
-public data class KotlinObjectPoolConfig<T>(
+public data class KotlinObjectPoolConfig(
     /**
      * This is the largest number of objects the pool provides at the same time.
      *

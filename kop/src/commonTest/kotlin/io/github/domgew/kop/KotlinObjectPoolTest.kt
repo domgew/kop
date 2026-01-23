@@ -24,6 +24,50 @@ import kotlinx.coroutines.withTimeout
 class KotlinObjectPoolTest {
 
     @Test
+    fun build_success() {
+        val objectPool = KotlinObjectPool.build {
+            maxSize(3)
+            createInstance {
+                TestItem(
+                    identity = 0,
+                    closeHandler = {},
+                )
+            }
+        }
+
+        assertTrue(true)
+
+        objectPool.close()
+    }
+
+    @Test
+    fun build_missing() {
+        assertEquals(
+            "createInstance",
+            assertFailsWith<KotlinObjectPoolBuildScope.MissingConfig> {
+                KotlinObjectPool.build<TestItem> {
+                    maxSize(3)
+                }
+            }
+                .what,
+        )
+        assertEquals(
+            "maxSize",
+            assertFailsWith<KotlinObjectPoolBuildScope.MissingConfig> {
+                KotlinObjectPool.build {
+                    createInstance {
+                        TestItem(
+                            identity = 0,
+                            closeHandler = {},
+                        )
+                    }
+                }
+            }
+                .what,
+        )
+    }
+
+    @Test
     fun parallelCreationDuration() = runTest {
         val itemDuration = 500.milliseconds
         val testState = prepare(

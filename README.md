@@ -11,6 +11,7 @@ KOP is a Kotlin Multiplatform object pool.
 
 * [Installation](#installation)
 * [Documentation](#documentation)
+* [Quick Start](#quick-start)
 * [Targets](#targets)
 * [Examples](#examples)
 
@@ -40,6 +41,43 @@ repositories {
 ## Documentation
 
 See Dokka-generated [docs](https://javadoc.io/doc/io.github.domgew/kop/latest/kop/io.github.domgew.kop/index.html).
+
+## Quick Start
+
+```kotlin
+typealias ObjectType = Any
+
+suspend fun createObjectInstance(): ObjectType =
+    TODO()
+
+val objectPool = KotlinObjectPool(
+    config = KotlinObjectPoolConfig(
+        maxSize = 4,
+        keepAliveFor = 1.minutes,
+        strategy = KotlinObjectPoolStrategy.LIFO,
+    ),
+    // ...
+) {
+    createObjectInstance()
+}
+
+// OR
+
+val objectPool = KotlinObjectPool.build {
+    maxSize(4)
+    keepAliveFor(1.minutes)
+    strategy(KotlinObjectPoolStrategy.LIFO)
+    // ...
+    createInstance {
+        createObjectInstance()
+    }
+}
+
+suspend fun callObject() =
+    objectPool.withObject { instance ->
+        instance.call()
+    }
+```
 
 ## Targets
 
