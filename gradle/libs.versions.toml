@@ -4,7 +4,7 @@ kotlin = "2.4.0"
 kotlinx-coroutines = "1.11.0"
 
 dokka = "2.2.0"
-kover = "0.9.8"
+kover = "0.9.9"
 vanniktech-mavenPublish = "0.37.0"
 
 graalvm = "1.1.4"
