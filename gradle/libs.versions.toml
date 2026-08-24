@@ -7,7 +7,7 @@ dokka = "2.2.0"
 kover = "0.9.9"
 vanniktech-mavenPublish = "0.37.0"
 
-graalvm = "1.1.9"
+graalvm = "1.1.10"
 
 [libraries]
 kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
