@@ -3,7 +3,7 @@ kotlin = "2.4.21"
 
 kotlinx-coroutines = "1.11.0"
 
-dokka = "2.2.0"
+dokka = "2.3.0"
 kover = "0.9.11"
 vanniktech-mavenPublish = "0.37.0"
 
